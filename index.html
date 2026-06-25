@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nandini Dairy Management</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css?v=2">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+    </div>
+
+    <!-- Top Navigation Bar (Hidden on Login) -->
+    <nav id="navbar" class="hidden">
+        <div class="nav-content">
+            <div class="logo">
+                <i class="fa-solid fa-cow"></i>
+                <span>Nandini Dairy</span>
+            </div>
+            <div class="user-info">
+                <span id="nav-user-name">Welcome, User</span>
+                <button id="logout-btn" class="btn btn-outline"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        
+        <!-- =================== LOGIN SECTION =================== -->
+        <section id="login-section" class="screen active">
+            <div class="glass-card login-card">
+                <div class="login-header">
+                    <div class="logo-large">
+                        <i class="fa-solid fa-cow"></i>
+                    </div>
+                    <h2>Welcome to Nandini Dairy</h2>
+                    <p>Select your role to continue</p>
+                </div>
+                
+                <div class="login-tabs">
+                    <button class="tab-btn active" data-target="customer-login">Login</button>
+                    <button class="tab-btn" data-target="register-form">Register</button>
+                    <button class="tab-btn" data-target="admin-login">Admin</button>
+                </div>
+
+                <!-- Customer Login Form (Step 1: Phone) -->
+                <form id="customer-login" class="login-form active">
+                    <div class="input-group">
+                        <label for="login-phone"><i class="fa-solid fa-phone"></i> Phone Number</label>
+                        <input type="text" id="login-phone" placeholder="Enter registered number" required>
+                    </div>
+                    <!-- ReCAPTCHA removed -->
+                    <button type="submit" class="btn btn-primary btn-block">Get OTP</button>
+                </form>
+
+                <!-- Customer OTP Form (Step 2) -->
+                <form id="otp-form" class="login-form">
+                    <p style="text-align:center; margin-bottom:1rem; font-size:0.9rem;">OTP sent to your number!</p>
+                    <div class="input-group">
+                        <label for="login-otp"><i class="fa-solid fa-key"></i> Enter OTP</label>
+                        <input type="text" id="login-otp" placeholder="6-digit OTP" required maxlength="6" style="text-align: center; letter-spacing: 5px; font-weight: bold; font-size: 1.2rem;">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Verify & Login</button>
+                    <button type="button" id="btn-back-login" class="btn btn-outline btn-block" style="margin-top:0.5rem;">Back</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="login-form">
+                    <div class="input-group">
+                        <label for="reg-name"><i class="fa-solid fa-user"></i> Full Name</label>
+                        <input type="text" id="reg-name" placeholder="Enter your name" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-phone"><i class="fa-solid fa-phone"></i> Phone Number</label>
+                        <input type="text" id="reg-phone" placeholder="Enter phone number" required>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-block">Register Now</button>
+                </form>
+
+                <!-- Admin Login Form -->
+                <form id="admin-login" class="login-form">
+                    <div class="input-group">
+                        <label for="admin-passcode"><i class="fa-solid fa-lock"></i> Admin Passcode</label>
+                        <input type="password" id="admin-passcode" placeholder="Enter passcode" required>
+                        <small>Default: admin123</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Login as Admin</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- =================== ADMIN DASHBOARD =================== -->
+        <section id="admin-section" class="screen hidden">
+            <div class="dashboard-header">
+                <h2>Admin Dashboard</h2>
+                <p>Manage farmers, daily milk collections, and balances.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Members</h3>
+                        <p id="admin-total-members">0</p>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-jug-detergent"></i></div>
+                    <div class="stat-info">
+                        <h3>Today's Milk (Liters)</h3>
+                        <p id="admin-today-milk">0.0</p>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+                    <div class="stat-info">
+                        <h3>Today's Payout</h3>
+                        <p id="admin-today-payout">₹0.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="btn-show-add-member"><i class="fa-solid fa-user-plus"></i> Add New Member</button>
+                <button class="btn btn-secondary" id="btn-show-add-milk"><i class="fa-solid fa-plus"></i> Daily Milk Entry</button>
+                <button class="btn btn-outline" id="btn-upload-doc"><i class="fa-solid fa-file-arrow-up"></i> Upload Documents</button>
+            </div>
+
+            <!-- Real-Time Analytics -->
+            <div class="analytics-grid">
+                <div class="glass-card chart-card">
+                    <h3>Daily Collection Trend</h3>
+                    <div class="chart-container">
+                        <canvas id="collection-chart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card chart-card">
+                    <h3>Top Farmers (Milk L)</h3>
+                    <div class="chart-container">
+                        <canvas id="farmers-chart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card activity-card">
+                    <h3><i class="fa-solid fa-bolt" style="color: #F59E0B;"></i> Live Activity Feed</h3>
+                    <div class="activity-feed" id="activity-feed">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members List -->
+            <div class="glass-card section-card">
+                <div class="card-header">
+                    <h3>Registered Farmers</h3>
+                    <div class="search-box">
+                        <i class="fa-solid fa-search"></i>
+                        <input type="text" id="member-search" placeholder="Search members...">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Total Milk (L)</th>
+                                <th>Current Balance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="members-list-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- =================== CUSTOMER DASHBOARD =================== -->
+        <section id="customer-section" class="screen hidden">
+            <div class="dashboard-header">
+                <h2>Farmer Dashboard</h2>
+                <p>Track your daily milk deposits and balances.</p>
+            </div>
+
+            <div class="stats-grid customer-stats">
+                <div class="glass-card stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="stat-info">
+                        <h3>Current Balance</h3>
+                        <p id="cust-balance">₹0.00</p>
+                    </div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-jug-detergent"></i></div>
+                    <div class="stat-info">
+                        <h3>Total Milk Provided</h3>
+                        <p id="cust-total-milk">0.0 L</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card section-card">
+                <div class="card-header">
+                    <h3>Your Milk Deposit History</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Quantity (Liters)</th>
+                                <th>Amount (₹)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-history-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- =================== MODALS =================== -->
+    
+    <!-- Add Member Modal -->
+    <div id="modal-add-member" class="modal-overlay hidden">
+        <div class="glass-card modal-content">
+            <div class="modal-header">
+                <h3>Add New Member</h3>
+                <button class="close-btn"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-add-member">
+                <div class="input-group">
+                    <label>Full Name</label>
+                    <input type="text" id="new-member-name" required>
+                </div>
+                <div class="input-group">
+                    <label>Phone Number</label>
+                    <input type="text" id="new-member-phone" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Register Member</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Milk Entry Modal -->
+    <div id="modal-add-milk" class="modal-overlay hidden">
+        <div class="glass-card modal-content">
+            <div class="modal-header">
+                <h3>Daily Milk Entry</h3>
+                <button class="close-btn"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <form id="form-add-milk">
+                <div class="input-group">
+                    <label>Select Member</label>
+                    <select id="milk-member-select" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Quantity (Liters)</label>
+                    <input type="number" id="milk-quantity" step="0.1" required>
+                </div>
+                <div class="input-group">
+                    <label>Rate per Liter (₹)</label>
+                    <input type="number" id="milk-rate" value="45" step="0.5" required>
+                </div>
+                <div class="calculated-amount">
+                    <span>Total Amount:</span>
+                    <strong id="milk-total-amount">₹0.00</strong>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-block">Save Entry</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Document Upload Modal (Mock) -->
+    <div id="modal-upload-doc" class="modal-overlay hidden">
+        <div class="glass-card modal-content">
+            <div class="modal-header">
+                <h3>Upload Document</h3>
+                <button class="close-btn"><i class="fa-solid fa-times"></i></button>
+            </div>
+            <div class="upload-area" id="upload-area">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>Drag and drop files here or click to browse</p>
+                <input type="file" id="file-input" hidden>
+            </div>
+            <div id="upload-status" class="hidden" style="margin-top: 15px; text-align: center; color: var(--success);">
+                <i class="fa-solid fa-check-circle"></i> Document uploaded successfully!
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle Button -->
+    <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle Theme">
+        <i class="fa-solid fa-moon"></i>
+    </button>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="toast-message">Message</span>
+    </div>
+
+    <!-- Firebase scripts removed -->
+
+    <!-- App Logic -->
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="app.js?v=2"></script>
+</body>
+</html>
