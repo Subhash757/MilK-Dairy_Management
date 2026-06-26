@@ -1,7 +1,6 @@
 <div align="center">
 
 
-
 # 🥛 Milk-Dairy Management System
 
 <a href="https://github.com/Subhash757/Milk-Dairy_Management/stargazers"><img src="https://img.shields.io/github/stars/Subhash757/Milk-Dairy_Management?style=for-the-badge&color=8C5C38" alt="Stars"></a>
