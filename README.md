@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://images.unsplash.com/photo-1528750711917-2dbfdf5a0659?q=80&w=1200&auto=format&fit=crop" alt="Milk Dairy Management Banner" width="100%" style="border-radius: 12px; margin-bottom: 20px;"/>
+
 
 # 🥛 Milk-Dairy Management System
 
