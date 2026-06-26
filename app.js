@@ -1,35 +1,41 @@
-// --- Socket.io Real-Time Integration ---
-const socket = io('http://localhost:3000');
-
-// Initialize local cache arrays
+// --- REST API Integration (Replaces Socket.io for Vercel) ---
 let localMembers = [];
 let localTransactions = [];
+let isInitialLoad = true;
 
-socket.on('initial_data', (data) => {
-    localMembers = data.members;
-    localTransactions = data.transactions;
-    localStorage.setItem('milkDairy_members', JSON.stringify(localMembers));
-    localStorage.setItem('milkDairy_transactions', JSON.stringify(localTransactions));
-    
-    if (currentUser && currentUser.role === 'admin') loadAdminDashboard();
-    else if (currentUser && currentUser.role === 'customer') loadCustomerDashboard();
-});
+window.fetchServerData = async function() {
+    try {
+        const response = await fetch('/api/data');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        
+        // Detect new activity (for toast notification)
+        if (!isInitialLoad && localTransactions.length < data.transactions.length) {
+            const newTransactions = data.transactions.slice(localTransactions.length);
+            newTransactions.forEach(t => {
+                const member = data.members.find(m => m.id === t.memberId);
+                const memberName = member ? member.name : 'A member';
+                showToast(`New Activity: ${memberName} deposited ${t.quantity}L`);
+            });
+        }
+        
+        localMembers = data.members || [];
+        localTransactions = data.transactions || [];
+        localStorage.setItem('milkDairy_members', JSON.stringify(localMembers));
+        localStorage.setItem('milkDairy_transactions', JSON.stringify(localTransactions));
+        
+        if (currentUser && currentUser.role === 'admin') loadAdminDashboard();
+        else if (currentUser && currentUser.role === 'customer') loadCustomerDashboard();
+        
+        isInitialLoad = false;
+    } catch (error) {
+        console.error("Failed to fetch data from server", error);
+    }
+}
 
-socket.on('data_updated', (data) => {
-    localMembers = data.members;
-    localTransactions = data.transactions;
-    localStorage.setItem('milkDairy_members', JSON.stringify(localMembers));
-    localStorage.setItem('milkDairy_transactions', JSON.stringify(localTransactions));
-    
-    if (currentUser && currentUser.role === 'admin') loadAdminDashboard();
-    else if (currentUser && currentUser.role === 'customer') loadCustomerDashboard();
-});
-
-socket.on('new_activity', (transaction) => {
-    const member = localMembers.find(m => m.id === transaction.memberId);
-    const memberName = member ? member.name : 'A member';
-    showToast(`New Activity: ${memberName} deposited ${transaction.quantity}L`);
-});
+// Initial fetch and set polling
+fetchServerData();
+setInterval(fetchServerData, 5000); // Poll every 5 seconds
 
 // Helpers
 const getMembers = () => localMembers.length > 0 ? localMembers : JSON.parse(localStorage.getItem('milkDairy_members') || '[]');
@@ -228,13 +234,21 @@ function handleRegister(e) {
         balance: 0
     };
 
-    socket.emit('add_member', newMember);
-    
-    e.target.reset();
-    showToast(`Registration successful! You can now login.`);
-    
-    // Switch to Login Tab
-    document.querySelector('[data-target="customer-login"]').click();
+    fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMember)
+    }).then(res => res.json()).then(data => {
+        if(data.success) {
+            e.target.reset();
+            showToast(`Registration successful! You can now login.`);
+            fetchServerData();
+            document.querySelector('[data-target="customer-login"]').click();
+        }
+    }).catch(err => {
+        console.error(err);
+        showToast('Registration failed');
+    });
 }
 
 async function handleRequestOTP(e) {
@@ -248,7 +262,7 @@ async function handleRequestOTP(e) {
 
         showToast('Sending OTP...');
         try {
-            const response = await fetch('http://localhost:3000/api/send-otp', {
+            const response = await fetch('/api/send-otp', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ phone: phoneInput })
@@ -284,7 +298,7 @@ async function handleVerifyOTP(e) {
     const enteredOTP = document.getElementById('login-otp').value.trim();
     
     try {
-        const response = await fetch('http://localhost:3000/api/verify-otp', {
+        const response = await fetch('/api/verify-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone: tempLoginPhone, otp: enteredOTP })
@@ -596,11 +610,21 @@ function handleAddMember(e) {
         balance: 0
     };
 
-    socket.emit('add_member', newMember);
-    
-    closeModal('modal-add-member');
-    e.target.reset();
-    showToast(`Member added successfully: ${newId}`);
+    fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newMember)
+    }).then(res => res.json()).then(data => {
+        if(data.success) {
+            closeModal('modal-add-member');
+            e.target.reset();
+            showToast(`Member added successfully: ${newId}`);
+            fetchServerData();
+        }
+    }).catch(err => {
+        console.error(err);
+        showToast('Failed to add member');
+    });
 }
 
 function populateMemberSelect() {
@@ -636,13 +660,23 @@ function handleAddMilkEntry(e) {
         amount
     };
 
-    // Save transaction via socket
-    socket.emit('add_milk_entry', transaction);
-
-    closeModal('modal-add-milk');
-    e.target.reset();
-    document.getElementById('milk-total-amount').innerText = '₹0.00';
-    showToast('Milk entry processing...');
+    // Save transaction via REST API
+    fetch('/api/transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction)
+    }).then(res => res.json()).then(data => {
+        if(data.success) {
+            closeModal('modal-add-milk');
+            e.target.reset();
+            document.getElementById('milk-total-amount').innerText = '₹0.00';
+            showToast('Milk entry added successfully');
+            fetchServerData();
+        }
+    }).catch(err => {
+        console.error(err);
+        showToast('Failed to add milk entry');
+    });
 }
 
 // Optional: Admin viewing a specific user's history
